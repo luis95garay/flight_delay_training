@@ -1,0 +1,41 @@
+# Configuración del Pipeline
+pipeline:
+  name: flight-delay-training-pipeline
+  display_name: Flight Delay Training Pipeline
+  description: Pipeline para entrenar modelo de predicción de retrasos de vuelos
+
+# Configuración de GCP
+gcp:
+  project_id: flights-476705 # Cambiar por tu Project ID
+  region: us-central1
+  bucket_name: flights-bucket-92837465 # Cambiar por tu bucket de GCS
+
+# Configuración de datos
+data:
+  source_path: gs://flights-bucket-92837465/data/data.csv
+  train_split: 0.8
+  test_split: 0.2
+  random_state: 42
+
+# Configuración del modelo
+model:
+  name: flight_delay_model
+  framework: sklearn
+  parameters:
+    learning_rate: 0.01
+    n_estimators: 100
+    max_depth: 10
+    random_state: 42
+
+# Configuración de entrenamiento
+training:
+  machine_type: n1-standard-4
+  accelerator_type:
+  accelerator_count: 0
+
+# Configuración de despliegue (opcional)
+deployment:
+  endpoint_name: flight-delay-endpoint
+  machine_type: n1-standard-2
+  min_replica_count: 1
+  max_replica_count: 3
