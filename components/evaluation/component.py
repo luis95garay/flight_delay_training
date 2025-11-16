@@ -21,7 +21,7 @@ def evaluate_model(
     feature_columns_path: str,
     test_data_path: str,
     evaluation_output_path: str,
-) -> NamedTuple("Outputs", [("evaluation_metrics", str), ("accuracy", float)]):
+) -> NamedTuple("Outputs", [("evaluation_metrics", str), ("accuracy", float), ("recall", float)]):
     """
     Evalúa el modelo entrenado con datos de test usando lógica de DelayModel
 
@@ -36,7 +36,7 @@ def evaluate_model(
     """
     import pandas as pd
     import joblib
-    from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+    from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, recall_score
     import json
     from google.cloud import storage
     import os
@@ -114,11 +114,14 @@ def evaluate_model(
     
     # Calcular métricas
     accuracy = accuracy_score(y_test, y_pred)
+    # Recall de la clase positiva (delay == 1)
+    recall = recall_score(y_test, y_pred, pos_label=1, zero_division=0)
     report = classification_report(y_test, y_pred, output_dict=True)
     cm = confusion_matrix(y_test, y_pred).tolist()
     
     metrics = {
         "accuracy": float(accuracy),
+        "recall_positive_class": float(recall),
         "classification_report": report,
         "confusion_matrix": cm,
         "n_test_samples": len(features)
@@ -134,9 +137,10 @@ def evaluate_model(
     eval_blob = bucket.blob(eval_blob_path)
     eval_blob.upload_from_filename(metrics_local)
     
-    Outputs = namedtuple("Outputs", ["evaluation_metrics", "accuracy"])
+    Outputs = namedtuple("Outputs", ["evaluation_metrics", "accuracy", "recall"])
     return Outputs(
         evaluation_metrics=evaluation_output_path,
-        accuracy=float(accuracy)
+        accuracy=float(accuracy),
+        recall=float(recall),
     )
 

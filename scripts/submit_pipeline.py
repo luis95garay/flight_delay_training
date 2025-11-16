@@ -59,6 +59,12 @@ def submit_pipeline(
         "random_state": data_config.get("random_state", 42),
         "learning_rate": model_config.get("parameters", {}).get("learning_rate", 0.01),
         "model_name": model_config.get("name", "flight_delay_model"),
+        # Nuevo parámetro: umbral de recall
+        # Acepta 0.6 o 60; si viene >1 asumimos porcentaje y lo convertimos
+        "recall_threshold": (lambda v: v/100 if isinstance(v, (int, float)) and v > 1 else v)(
+            model_config.get("parameters", {}).get("accept_recall", 0.6)
+        ),
+        "model_display_name": model_config.get("display_name", model_config.get("name", "flight_delay_model")),
     }
     
     # Validar parámetros requeridos

@@ -45,6 +45,7 @@ def train_model(
     from google.cloud import storage
     import os
     from collections import namedtuple
+    from typing import Optional
 
     # Lista local de features esperadas (mismo conjunto usado en evaluación)
     top_10_features = [
@@ -128,7 +129,7 @@ def train_model(
     model_local = "/tmp/model.joblib"
     joblib.dump(xgb_model, model_local)
     
-    # Guardar métricas
+    # Guardar métricas iniciales (antes de subirlas) — se re-escribirán si se enriquece con Vertex
     metrics_local = "/tmp/metrics.json"
     with open(metrics_local, "w") as f:
         json.dump(metrics, f)

@@ -7,6 +7,7 @@ from kfp.dsl import pipeline
 from components.data_preprocessing.component import data_preprocessing
 from components.training.component import train_model
 from components.evaluation.component import evaluate_model
+from components.registry.component import register_model
 from utils.config_loader import load_config
 
 
@@ -29,6 +30,8 @@ def flight_delay_training_pipeline(
     learning_rate: float = 0.01,
     bucket_name: str = _DEFAULT_BUCKET_NAME,
     model_name: str = _DEFAULT_MODEL_NAME,
+    recall_threshold: float = 0.6,
+    model_display_name: str = _DEFAULT_MODEL_NAME,
 ):
     """
     Pipeline completo de ML para entrenamiento de modelo usando DelayModel con XGBoost
@@ -42,6 +45,8 @@ def flight_delay_training_pipeline(
         learning_rate: Tasa de aprendizaje para XGBoost
         bucket_name: Nombre del bucket de GCS donde se guardan los artefactos
         model_name: Nombre del modelo
+        recall_threshold: Umbral mínimo de recall (clase positiva) para registrar el modelo
+        model_display_name: Nombre visible del modelo en el registry
     """
 
     # Rutas de salida basadas en configuración/argumentos
@@ -73,6 +78,16 @@ def flight_delay_training_pipeline(
         test_data_path=preprocess_op.outputs["test_data_path"],
         evaluation_output_path=evaluation_output_path,
     )
+
+    # Paso 4 (condicional): Registrar si recall >= threshold
+    from kfp import dsl as _dsl
+    with _dsl.Condition(evaluate_op.outputs["recall"] >= recall_threshold):
+        _ = register_model(
+            model_path=train_op.outputs["model_path"],
+            project_id=project_id,
+            location=region,
+            model_display_name=model_display_name,
+        )
 
 
 if __name__ == "__main__":
