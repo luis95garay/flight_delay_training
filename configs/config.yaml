@@ -13,7 +13,7 @@ gcp:
 # Configuración de datos
 data:
   source_path: gs://flights-bucket-92837465/data/data.csv
-  train_split: 0.8
+  train_split: 0.67
   test_split: 0.2
   random_state: 42
 

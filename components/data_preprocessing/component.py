@@ -22,12 +22,12 @@ def data_preprocessing(
 ) -> NamedTuple("Outputs", [("train_data_path", str), ("test_data_path", str)]):
     """
     Preprocesa los datos usando la lógica de DelayModel: descarga, limpia y divide en train/test
-    
+
     Args:
         input_data_path: Ruta GCS del dataset de entrada
         train_split: Proporción de datos para entrenamiento (0-1)
         random_state: Semilla para reproducibilidad
-    
+
     Returns:
         Tupla con rutas de datos de train y test
     """
@@ -38,48 +38,31 @@ def data_preprocessing(
     from google.cloud import storage
     import os
     from collections import namedtuple
-    
+
+    # Implementación local de get_min_diff para que esté disponible en tiempo de ejecución del componente
+    def get_min_diff(row: "pd.Series") -> float:
+        """
+        Calcula la diferencia mínima entre fechas/horas programadas y reales en minutos.
+        """
+        try:
+            fecha_o = pd.to_datetime(row.get('Fecha-O'), errors='coerce')
+            fecha_i = pd.to_datetime(row.get('Fecha-I'), errors='coerce')
+            if pd.isna(fecha_o) or pd.isna(fecha_i):
+                return 0.0
+            timedelta = fecha_o - fecha_i
+            return float(timedelta.total_seconds() / 60.0)
+        except Exception:
+            return 0.0
+
     # Construir rutas de salida basándose en input_data_path
-    if input_data_path.endswith('.csv'):
+    if input_data_path.endswith(".csv"):
         base_path = input_data_path[:-4]
     else:
         base_path = input_data_path
-    
+
     output_train_path = f"{base_path}_train.csv"
     output_test_path = f"{base_path}_test.csv"
-    
-    # Función auxiliar get_min_diff (incluida en el componente)
-    def get_min_diff(row):
-        """Calcula la diferencia mínima entre fechas programadas y reales"""
-        try:
-            fecha_o = pd.to_datetime(row['Fecha-O'], errors='coerce')
-            fecha_i = pd.to_datetime(row['Fecha-I'], errors='coerce')
-            
-            if pd.isna(fecha_o) or pd.isna(fecha_i):
-                return 0
-            
-            # Calcular diferencia en minutos
-            # (fecha_o - fecha_i) es un Timedelta, usar total_seconds() para obtener segundos y convertir a minutos
-            timedelta = fecha_o - fecha_i
-            min_diff = timedelta.total_seconds() / 60.0
-            return float(min_diff)
-        except (KeyError, ValueError, TypeError):
-            return 0
-    
-    # Lista de top 10 features (ajustar según tu análisis)
-    top_10_features = [
-        "OPERA_Latin American Wings",
-        "MES_7",
-        "MES_10",
-        "OPERA_Grupo LATAM",
-        "MES_12",
-        "TIPOVUELO_I",
-        "MES_4",
-        "MES_11",
-        "OPERA_Sky Airline",
-        "OPERA_Copa Air"
-    ]
-    
+
     # Inicializar cliente de GCS
     storage_client = storage.Client()
     

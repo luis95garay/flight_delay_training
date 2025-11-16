@@ -24,13 +24,13 @@ def evaluate_model(
 ) -> NamedTuple("Outputs", [("evaluation_metrics", str), ("accuracy", float)]):
     """
     Evalúa el modelo entrenado con datos de test usando lógica de DelayModel
-    
+
     Args:
         model_path: Ruta GCS del modelo entrenado
         feature_columns_path: Ruta GCS del archivo con columnas de features guardadas
         test_data_path: Ruta GCS del dataset de test
         evaluation_output_path: Ruta GCS donde guardar métricas de evaluación
-    
+
     Returns:
         Tupla con ruta de métricas y accuracy
     """
@@ -41,8 +41,8 @@ def evaluate_model(
     from google.cloud import storage
     import os
     from collections import namedtuple
-    
-    # Lista de top 10 features
+
+    # Lista local de features esperadas para asegurar consistencia con entrenamiento
     top_10_features = [
         "OPERA_Latin American Wings",
         "MES_7",
@@ -53,9 +53,9 @@ def evaluate_model(
         "MES_4",
         "MES_11",
         "OPERA_Sky Airline",
-        "OPERA_Copa Air"
+        "OPERA_Copa Air",
     ]
-    
+
     # Inicializar cliente de GCS
     storage_client = storage.Client()
     

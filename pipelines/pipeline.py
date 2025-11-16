@@ -7,11 +7,18 @@ from kfp.dsl import pipeline
 from components.data_preprocessing.component import data_preprocessing
 from components.training.component import train_model
 from components.evaluation.component import evaluate_model
+from utils.config_loader import load_config
+
+
+# Cargamos configuración para obtener valores por defecto y evitar hardcodear rutas
+_config = load_config()
+_DEFAULT_BUCKET_NAME = _config["gcp"]["bucket_name"]
+_DEFAULT_MODEL_NAME = _config["model"]["name"]
 
 
 @pipeline(
     name="flight-delay-training-pipeline",
-    description="Pipeline completo para entrenar modelo de predicción de retrasos de vuelos usando DelayModel con XGBoost"
+    description="Pipeline completo para entrenar modelo de predicción de retrasos de vuelos usando DelayModel con XGBoost",
 )
 def flight_delay_training_pipeline(
     project_id: str,
@@ -20,11 +27,12 @@ def flight_delay_training_pipeline(
     train_split: float = 0.8,
     random_state: int = 42,
     learning_rate: float = 0.01,
-    model_name: str = "flight_delay_model",
+    bucket_name: str = _DEFAULT_BUCKET_NAME,
+    model_name: str = _DEFAULT_MODEL_NAME,
 ):
     """
     Pipeline completo de ML para entrenamiento de modelo usando DelayModel con XGBoost
-    
+
     Args:
         project_id: ID del proyecto de GCP
         region: Región de GCP (ej: us-central1)
@@ -32,14 +40,15 @@ def flight_delay_training_pipeline(
         train_split: Proporción de datos para entrenamiento
         random_state: Semilla para reproducibilidad en división train/test
         learning_rate: Tasa de aprendizaje para XGBoost
+        bucket_name: Nombre del bucket de GCS donde se guardan los artefactos
         model_name: Nombre del modelo
     """
-    
-    # Rutas de salida
-    model_output_path = f"gs://flights-bucket-92837465/models/{model_name}.joblib"
-    feature_columns_output_path = f"gs://flights-bucket-92837465/models/{model_name}_feature_columns.json"
-    evaluation_output_path = f"gs://flights-bucket-92837465/evaluations/{model_name}_evaluation.json"
-    
+
+    # Rutas de salida basadas en configuración/argumentos
+    model_output_path = f"gs://{bucket_name}/models/{model_name}.joblib"
+    feature_columns_output_path = f"gs://{bucket_name}/models/{model_name}_feature_columns.json"
+    evaluation_output_path = f"gs://{bucket_name}/evaluations/{model_name}_evaluation.json"
+
     # Paso 1: Preprocesamiento de datos
     # Las rutas de train/test se construyen automáticamente dentro del componente
     preprocess_op = data_preprocessing(

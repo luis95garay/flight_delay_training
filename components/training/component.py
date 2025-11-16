@@ -25,14 +25,14 @@ def train_model(
 ) -> NamedTuple("Outputs", [("model_path", str), ("model_metrics", str), ("feature_columns_path", str)]):
     """
     Entrena un modelo usando la lógica de DelayModel con XGBoost
-    
+
     Args:
         train_data_path: Ruta GCS del dataset de entrenamiento
         model_output_path: Ruta GCS donde guardar el modelo entrenado
         feature_columns_output_path: Ruta GCS donde guardar las columnas de features para consistencia
         learning_rate: Tasa de aprendizaje para XGBoost
         random_state: Semilla para reproducibilidad
-    
+
     Returns:
         Tupla con ruta del modelo, métricas y columnas de features
     """
@@ -45,8 +45,8 @@ def train_model(
     from google.cloud import storage
     import os
     from collections import namedtuple
-    
-    # Lista de top 10 features
+
+    # Lista local de features esperadas (mismo conjunto usado en evaluación)
     top_10_features = [
         "OPERA_Latin American Wings",
         "MES_7",
@@ -57,9 +57,9 @@ def train_model(
         "MES_4",
         "MES_11",
         "OPERA_Sky Airline",
-        "OPERA_Copa Air"
+        "OPERA_Copa Air",
     ]
-    
+
     # Inicializar cliente de GCS
     storage_client = storage.Client()
     
